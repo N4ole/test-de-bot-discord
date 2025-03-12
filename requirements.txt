@@ -1,0 +1,7 @@
+discord.py
+requests
+```
+pip install -r requirements.txt
+```
+
+
