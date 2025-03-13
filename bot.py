@@ -8,14 +8,13 @@ from discord.ext import commands
 import logging
 
 
-# ✅ Chargement des variables d'environnement
 dotenv.load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
-# ✅ Configuration du logging
+
 logging.basicConfig(level=logging.INFO)
 
-# ✅ Récupération des IDs des salons logs depuis .env
+
 LOGS_SENT_CHANNEL_ID = int(os.getenv("LOGS_SENT_CHANNEL_ID", 0))
 LOGS_DELETED_CHANNEL_ID = int(os.getenv("LOGS_DELETED_CHANNEL_ID", 0))
 LOGS_EDITED_CHANNEL_ID = int(os.getenv("LOGS_EDITED_CHANNEL_ID", 0))
@@ -26,13 +25,12 @@ print(f"LOGS_DELETED_CHANNEL_ID: {LOGS_DELETED_CHANNEL_ID}")
 print(f"LOGS_EDITED_CHANNEL_ID: {LOGS_EDITED_CHANNEL_ID}")
 print(f"==================================================")
 
-# ✅ Intents Discord
+
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
-# ✅ Fonction pour envoyer un log dans un salon Discord
 async def send_log_to_channel(event, log_entry):
     """Envoie un log dans le salon Discord correspondant"""
 
@@ -72,7 +70,6 @@ async def send_log_to_channel(event, log_entry):
     await channel.send(embed=embed)
 
 
-# ✅ Fonction pour enregistrer les logs dans des fichiers séparés **et envoyer sur Discord**
 async def log_to_json(event, username, user_id, content=None, before=None, after=None, channel=None):
     log_entry = {
         "username": username,
@@ -87,7 +84,6 @@ async def log_to_json(event, username, user_id, content=None, before=None, after
         log_entry["before"] = before
         log_entry["after"] = after
 
-    # Sélection du fichier en fonction de l'événement
     file_map = {
         "message_sent": "logs_sent.json",
         "message_deleted": "logs_deleted.json",
@@ -99,7 +95,7 @@ async def log_to_json(event, username, user_id, content=None, before=None, after
         return
 
     try:
-        # Lecture des logs existants ou création d'un fichier vide
+
         if not os.path.exists(file_path):
             with open(file_path, "w") as f:
                 json.dump([], f, indent=4)
@@ -107,21 +103,17 @@ async def log_to_json(event, username, user_id, content=None, before=None, after
         with open(file_path, "r") as f:
             logs = json.load(f)
 
-        # Ajout du nouveau log
         logs.append(log_entry)
 
-        # Écriture des logs mis à jour
         with open(file_path, "w") as f:
             json.dump(logs, f, indent=4)
 
-        # ✅ Après avoir écrit dans le fichier JSON, on envoie le log sur Discord
         await send_log_to_channel(event, log_entry)
 
     except (json.JSONDecodeError, IOError) as e:
         logging.error(f"❌ Erreur lors de l'écriture du log : {e}")
 
 
-# ✅ Indication que le bot est prêt
 @bot.event
 async def on_ready():
     print(f"==================================================")
@@ -129,7 +121,6 @@ async def on_ready():
     logging.info(f"📌 Présent dans {len(bot.guilds)} serveurs.")
     print(f"\n✅ Bot en ligne en tant que {bot.user}!\n")
 
-    # Vérification des salons logs
     sent_channel = bot.get_channel(LOGS_SENT_CHANNEL_ID)
     deleted_channel = bot.get_channel(LOGS_DELETED_CHANNEL_ID)
     edited_channel = bot.get_channel(LOGS_EDITED_CHANNEL_ID)
@@ -140,7 +131,6 @@ async def on_ready():
     print(f"==================================================")
 
 
-# ✅ Journalisation des messages envoyés
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -150,7 +140,6 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-# ✅ Journalisation des messages supprimés
 @bot.event
 async def on_message_delete(message):
     if message.author == bot.user:
@@ -159,7 +148,6 @@ async def on_message_delete(message):
     await log_to_json("message_deleted", str(message.author), str(message.author.id), content=message.content, channel=str(message.channel))
 
 
-# ✅ Journalisation des messages modifiés
 @bot.event
 async def on_message_edit(before, after):
     if before.author == bot.user or before.content == after.content:
@@ -168,7 +156,6 @@ async def on_message_edit(before, after):
     await log_to_json("message_edited", str(before.author), str(before.author.id), before=before.content, after=after.content, channel=str(before.channel))
 
 
-# ✅ Chargement des cogs (modules de commandes)
 async def load_cogs():
     for filename in os.listdir("./commands"):
         if filename.endswith(".py"):
@@ -179,7 +166,6 @@ async def load_cogs():
                 logging.error(f"❌ Échec du chargement de {filename}: {e}")
 
 
-# ✅ Lancement du bot
 async def main():
     async with bot:
         await load_cogs()
