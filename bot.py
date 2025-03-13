@@ -157,13 +157,15 @@ async def on_message_edit(before, after):
 
 
 async def load_cogs():
-    for filename in os.listdir("./commands"):
-        if filename.endswith(".py"):
-            try:
-                await bot.load_extension(f"commands.{filename[:-3]}")
-                logging.info(f"✅ Module chargé : {filename}")
-            except Exception as e:
-                logging.error(f"❌ Échec du chargement de {filename}: {e}")
+    for folder in ["commands", "events"]:
+        for filename in os.listdir(f"./{folder}"):
+            if filename.endswith(".py"):
+                try:
+                    await bot.load_extension(f"{folder}.{filename[:-3]}")
+                    logging.info(f"✅ Module chargé : {folder}/{filename}")
+                except Exception as e:
+                    logging.error(
+                        f"❌ Échec du chargement de {folder}/{filename}: {e}")
 
 
 async def main():

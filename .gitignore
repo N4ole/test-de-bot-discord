@@ -2,5 +2,6 @@ logs_deleted.json
 logs_edited.json
 logs_sent.json
 warnings.json
+watchlist.json
 .env
 config.py
