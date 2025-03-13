@@ -11,25 +11,20 @@ class ModLogs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # ✅ Charger les logs depuis le fichier JSON
     def load_logs(self):
         if os.path.exists(MODLOGS_FILE):
             with open(MODLOGS_FILE, "r") as f:
                 return json.load(f)
         return {}
 
-    # ✅ Sauvegarder les logs
     def save_logs(self, logs):
         with open(MODLOGS_FILE, "w") as f:
             json.dump(logs, f, indent=4)
 
-    # ✅ Ajouter un log pour un utilisateur (puni) et pour un modérateur
     def add_log(self, user_id, action, moderator_id, reason="Aucune raison spécifiée"):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        logs = self.load_logs()  # Charger les logs à jour
-
-        # Enregistrer les logs pour l'utilisateur puni
+        logs = self.load_logs()
         if str(user_id) not in logs:
             logs[str(user_id)] = []
 
@@ -40,7 +35,6 @@ class ModLogs(commands.Cog):
             "timestamp": timestamp
         })
 
-        # Enregistrer aussi l'action pour le modérateur
         if str(moderator_id) not in logs:
             logs[str(moderator_id)] = []
 
@@ -51,14 +45,13 @@ class ModLogs(commands.Cog):
             "timestamp": timestamp
         })
 
-        self.save_logs(logs)  # Sauvegarder les logs mis à jour
+        self.save_logs(logs)
 
-    # ✅ Commande pour afficher les logs d’un utilisateur ou d'un modérateur
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def modlogs(self, ctx, member: discord.Member):
         """Affiche l'historique des actions modératrices sur un utilisateur ou les actions d'un modérateur."""
-        logs = self.load_logs()  # Charger les logs à jour
+        logs = self.load_logs()
         user_id = str(member.id)
 
         if user_id not in logs or len(logs[user_id]) == 0:
@@ -71,13 +64,13 @@ class ModLogs(commands.Cog):
         )
 
         for log in logs[user_id]:
-            if "user" in log:  # Si c'est une action faite par un modérateur
+            if "user" in log:
                 embed.add_field(
                     name=f"🔹 {log['action']} - {log['timestamp']}",
                     value=f"👤 **Utilisateur ciblé :** {log['user']}\n📄 **Raison :** {log['reason']}",
                     inline=False
                 )
-            else:  # Si c'est une action faite sur un utilisateur
+            else:
                 embed.add_field(
                     name=f"🔹 {log['action']} - {log['timestamp']}",
                     value=f"👤 **Modérateur :** {log['moderator']}\n📄 **Raison :** {log['reason']}",
@@ -85,8 +78,6 @@ class ModLogs(commands.Cog):
                 )
 
         await ctx.send(embed=embed)
-
-# ✅ Fonction pour charger le cog
 
 
 async def setup(bot):

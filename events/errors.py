@@ -6,7 +6,6 @@ class ErrorHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # ✅ Gestion des erreurs de permissions
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
@@ -15,8 +14,6 @@ class ErrorHandler(commands.Cog):
             await ctx.send("⚠️ **Argument manquant.** Vérifiez l'utilisation de la commande.")
         else:
             await ctx.send(f"🚨 **Erreur :** {error}")
-
-# ✅ Fonction pour charger le cog
 
 
 async def setup(bot):

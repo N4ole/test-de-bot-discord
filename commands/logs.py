@@ -8,7 +8,6 @@ class Logs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        # Chargement des salons logs depuis .env
         self.logs_sent_channel_id = int(os.getenv("LOGS_SENT_CHANNEL_ID", 0))
         self.logs_deleted_channel_id = int(
             os.getenv("LOGS_DELETED_CHANNEL_ID", 0))
@@ -42,7 +41,7 @@ class Logs(commands.Cog):
             await ctx.send(f"⚠️ Aucun log enregistré pour `{log_type}`.")
             return
 
-        logs = logs[-5:]  # On affiche uniquement les 5 derniers logs
+        logs = logs[-5:]
 
         embed = discord.Embed(
             title=f"📄 Derniers logs `{log_type}`", color=discord.Color.blue())

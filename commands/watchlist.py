@@ -11,19 +11,16 @@ class Watchlist(commands.Cog):
         self.bot = bot
         self.watchlist = self.load_watchlist()
 
-    # ✅ Charger la watchlist depuis le fichier JSON
     def load_watchlist(self):
         if os.path.exists(WATCHLIST_FILE):
             with open(WATCHLIST_FILE, "r") as f:
                 return json.load(f)
         return []
 
-    # ✅ Sauvegarder la watchlist
     def save_watchlist(self):
         with open(WATCHLIST_FILE, "w") as f:
             json.dump(self.watchlist, f, indent=4)
 
-    # ✅ Ajouter un utilisateur à la watchlist
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     async def watchlist(self, ctx, action: str, member: discord.Member = None):
@@ -64,7 +61,6 @@ class Watchlist(commands.Cog):
         else:
             await ctx.send("❌ Commande invalide. Utilisez : `!watchlist add @user`, `!watchlist remove @user` ou `!watchlist list`.")
 
-    # ✅ Surveiller les messages des utilisateurs sur la watchlist
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
@@ -88,8 +84,6 @@ class Watchlist(commands.Cog):
             else:
                 print(
                     f"⚠️ Aucun salon `watchlist-logs` trouvé pour surveiller {message.author}.")
-
-# ✅ Fonction pour charger le cog
 
 
 async def setup(bot):

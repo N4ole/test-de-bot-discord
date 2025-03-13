@@ -30,7 +30,6 @@ class Warnings(commands.Cog):
     async def warn(self, ctx, member: discord.Member, *, reason="Aucune raison spécifiée"):
         """Avertit un utilisateur et enregistre l'avertissement"""
 
-        # ✅ Charger les fichiers JSON
         with open(WARNINGS_FILE, "r") as f:
             warnings = json.load(f)
 
@@ -38,9 +37,8 @@ class Warnings(commands.Cog):
             modlogs = json.load(f)
 
         user_id = str(member.id)
-        mod_id = str(ctx.author.id)  # ID du modérateur
+        mod_id = str(ctx.author.id)
 
-        # ✅ Ajouter l'avertissement dans `warnings.json`
         if user_id not in warnings:
             warnings[user_id] = []
 
@@ -52,7 +50,6 @@ class Warnings(commands.Cog):
 
         self.save_data(WARNINGS_FILE, warnings)
 
-        # ✅ Ajouter l'action dans `modlogs.json`
         if mod_id not in modlogs:
             modlogs[mod_id] = []
 
