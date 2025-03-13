@@ -1,7 +1,4 @@
-discord.py
-requests
-```
-pip install -r requirements.txt
-```
-
-
+discord.py==2.3.2
+python-dotenv==1.0.0
+yt-dlp==2024.3.10
+ffmpeg
