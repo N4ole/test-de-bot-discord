@@ -1,3 +1,5 @@
-logs.json
+logs_deleted.json
+logs_edited.json
+logs_sent.json
 .env
 config.py
