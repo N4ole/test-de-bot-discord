@@ -10,7 +10,6 @@ MODLOGS_FILE = "modlogs.json"
 class ModLogs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.logs = self.load_logs()
 
     # ✅ Charger les logs depuis le fichier JSON
     def load_logs(self):
@@ -20,34 +19,49 @@ class ModLogs(commands.Cog):
         return {}
 
     # ✅ Sauvegarder les logs
-    def save_logs(self):
+    def save_logs(self, logs):
         with open(MODLOGS_FILE, "w") as f:
-            json.dump(self.logs, f, indent=4)
+            json.dump(logs, f, indent=4)
 
-    # ✅ Ajouter un log pour un utilisateur
-    def add_log(self, user_id, action, moderator, reason="Aucune raison spécifiée"):
+    # ✅ Ajouter un log pour un utilisateur (puni) et pour un modérateur
+    def add_log(self, user_id, action, moderator_id, reason="Aucune raison spécifiée"):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        if str(user_id) not in self.logs:
-            self.logs[str(user_id)] = []
+        logs = self.load_logs()  # Charger les logs à jour
 
-        self.logs[str(user_id)].append({
+        # Enregistrer les logs pour l'utilisateur puni
+        if str(user_id) not in logs:
+            logs[str(user_id)] = []
+
+        logs[str(user_id)].append({
             "action": action,
-            "moderator": moderator,
+            "moderator": f"<@{moderator_id}>",
             "reason": reason,
             "timestamp": timestamp
         })
 
-        self.save_logs()
+        # Enregistrer aussi l'action pour le modérateur
+        if str(moderator_id) not in logs:
+            logs[str(moderator_id)] = []
 
-    # ✅ Commande pour afficher les logs d'un utilisateur
+        logs[str(moderator_id)].append({
+            "action": action,
+            "user": f"<@{user_id}>",
+            "reason": reason,
+            "timestamp": timestamp
+        })
+
+        self.save_logs(logs)  # Sauvegarder les logs mis à jour
+
+    # ✅ Commande pour afficher les logs d’un utilisateur ou d'un modérateur
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def modlogs(self, ctx, member: discord.Member):
-        """Affiche l'historique des actions modératrices sur un utilisateur."""
+        """Affiche l'historique des actions modératrices sur un utilisateur ou les actions d'un modérateur."""
+        logs = self.load_logs()  # Charger les logs à jour
         user_id = str(member.id)
 
-        if user_id not in self.logs or len(self.logs[user_id]) == 0:
+        if user_id not in logs or len(logs[user_id]) == 0:
             await ctx.send(f"📜 **Aucun historique de modération pour {member.mention}.**")
             return
 
@@ -56,12 +70,19 @@ class ModLogs(commands.Cog):
             color=discord.Color.red()
         )
 
-        for log in self.logs[user_id]:
-            embed.add_field(
-                name=f"🔹 {log['action']} - {log['timestamp']}",
-                value=f"👤 **Modérateur:** {log['moderator']}\n📄 **Raison:** {log['reason']}",
-                inline=False
-            )
+        for log in logs[user_id]:
+            if "user" in log:  # Si c'est une action faite par un modérateur
+                embed.add_field(
+                    name=f"🔹 {log['action']} - {log['timestamp']}",
+                    value=f"👤 **Utilisateur ciblé :** {log['user']}\n📄 **Raison :** {log['reason']}",
+                    inline=False
+                )
+            else:  # Si c'est une action faite sur un utilisateur
+                embed.add_field(
+                    name=f"🔹 {log['action']} - {log['timestamp']}",
+                    value=f"👤 **Modérateur :** {log['moderator']}\n📄 **Raison :** {log['reason']}",
+                    inline=False
+                )
 
         await ctx.send(embed=embed)
 

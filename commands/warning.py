@@ -2,46 +2,77 @@ import discord
 from discord.ext import commands
 import json
 import os
+from datetime import datetime
+
+WARNINGS_FILE = "warnings.json"
+MODLOGS_FILE = "modlogs.json"
 
 
 class Warnings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.file_path = "warnings.json"
+        self.load_files()
 
-        if not os.path.exists(self.file_path):
-            with open(self.file_path, "w") as f:
-                json.dump({}, f, indent=4)
+    def load_files(self):
+        """Charge les fichiers JSON"""
+        for file in [WARNINGS_FILE, MODLOGS_FILE]:
+            if not os.path.exists(file):
+                with open(file, "w") as f:
+                    json.dump({}, f, indent=4)
+
+    def save_data(self, file, data):
+        """Sauvegarde les données dans un fichier JSON"""
+        with open(file, "w") as f:
+            json.dump(data, f, indent=4)
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     async def warn(self, ctx, member: discord.Member, *, reason="Aucune raison spécifiée"):
         """Avertit un utilisateur et enregistre l'avertissement"""
 
-        with open(self.file_path, "r") as f:
+        # ✅ Charger les fichiers JSON
+        with open(WARNINGS_FILE, "r") as f:
             warnings = json.load(f)
 
-        user_id = str(member.id)
+        with open(MODLOGS_FILE, "r") as f:
+            modlogs = json.load(f)
 
+        user_id = str(member.id)
+        mod_id = str(ctx.author.id)  # ID du modérateur
+
+        # ✅ Ajouter l'avertissement dans `warnings.json`
         if user_id not in warnings:
             warnings[user_id] = []
 
         warnings[user_id].append({
             "moderator": str(ctx.author),
-            "reason": reason
+            "reason": reason,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
 
-        with open(self.file_path, "w") as f:
-            json.dump(warnings, f, indent=4)
+        self.save_data(WARNINGS_FILE, warnings)
 
-        await ctx.send(f"⚠️ {member.mention} a été averti pour : `{reason}`")
+        # ✅ Ajouter l'action dans `modlogs.json`
+        if mod_id not in modlogs:
+            modlogs[mod_id] = []
+
+        modlogs[mod_id].append({
+            "action": "Warn",
+            "user": str(member),
+            "reason": reason,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        self.save_data(MODLOGS_FILE, modlogs)
+
+        await ctx.send(f"⚠️ {member.mention} a été averti par {ctx.author.mention} pour : `{reason}`")
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
     async def warnings(self, ctx, member: discord.Member):
         """Affiche la liste des avertissements d'un utilisateur"""
 
-        with open(self.file_path, "r") as f:
+        with open(WARNINGS_FILE, "r") as f:
             warnings = json.load(f)
 
         user_id = str(member.id)
@@ -54,7 +85,8 @@ class Warnings(commands.Cog):
             title=f"⚠️ Avertissements de {member.name}", color=discord.Color.orange())
         for i, warn in enumerate(warnings[user_id], start=1):
             embed.add_field(
-                name=f"#{i} - Modérateur : {warn['moderator']}", value=f"📝 {warn['reason']}", inline=False)
+                name=f"#{i} - Modérateur : {warn['moderator']} ({warn['timestamp']})",
+                value=f"📝 {warn['reason']}", inline=False)
 
         await ctx.send(embed=embed)
 
@@ -63,7 +95,7 @@ class Warnings(commands.Cog):
     async def clearwarns(self, ctx, member: discord.Member):
         """Efface tous les avertissements d'un utilisateur"""
 
-        with open(self.file_path, "r") as f:
+        with open(WARNINGS_FILE, "r") as f:
             warnings = json.load(f)
 
         user_id = str(member.id)
@@ -74,9 +106,7 @@ class Warnings(commands.Cog):
 
         warnings[user_id] = []
 
-        with open(self.file_path, "w") as f:
-            json.dump(warnings, f, indent=4)
-
+        self.save_data(WARNINGS_FILE, warnings)
         await ctx.send(f"🗑️ Tous les avertissements de {member.mention} ont été supprimés.")
 
 

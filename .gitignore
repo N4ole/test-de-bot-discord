@@ -3,5 +3,6 @@ logs_edited.json
 logs_sent.json
 warnings.json
 watchlist.json
+modlogs.json
 .env
 config.py
