@@ -77,6 +77,28 @@ class Moderation(commands.Cog):
         else:
             await ctx.send(f"⚠️ **{member.mention} n'est pas mute.**")
 
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def ban(self, ctx, member: discord.Member, *, reason="Aucune raison spécifiée"):
+        """Bannit un utilisateur du serveur"""
+        try:
+            await member.ban(reason=reason)
+            await ctx.send(f"✅ {member.mention} a été **banni** pour : `{reason}`")
+            self.add_log(member.id, "Ban", ctx.author.name, reason)
+        except discord.Forbidden:
+            await ctx.send("❌ Je n'ai pas la permission de bannir cet utilisateur.")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def kick(self, ctx, member: discord.Member, *, reason="Aucune raison spécifiée"):
+        """Expulse un utilisateur du serveur"""
+        try:
+            await member.kick(reason=reason)
+            await ctx.send(f"✅ {member.mention} a été **expulsé** pour : `{reason}`")
+            self.add_log(member.id, "Kick", ctx.author.name, reason)
+        except discord.Forbidden:
+            await ctx.send("❌ Je n'ai pas la permission d'expulser cet utilisateur.")
+
 
 async def setup(bot):
     await bot.add_cog(Moderation(bot))
