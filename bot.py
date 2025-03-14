@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 import logging
 
-bot_ready = False  # Empêche `on_ready()` d'être exécuté plusieurs fois
+bot_ready = False
 
 dotenv.load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -28,7 +28,6 @@ intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 
-# ✅ Charger la configuration des serveurs
 def load_server_config():
     """Charge le fichier JSON contenant la configuration des serveurs."""
     if os.path.exists(CONFIG_FILE):
@@ -43,7 +42,6 @@ def save_server_config(config):
         json.dump(config, f, indent=4)
 
 
-# ✅ Récupérer un fichier spécifique par serveur
 def get_server_file(guild_id, filename):
     """Crée un fichier spécifique à un serveur si nécessaire"""
     folder = f"data/{guild_id}/"
@@ -52,7 +50,6 @@ def get_server_file(guild_id, filename):
     return f"{folder}{filename}"
 
 
-# ✅ Fonction d'enregistrement des logs
 async def log_to_json(event, guild_id, username, user_id, content=None, before=None, after=None, channel=None):
     """Enregistre les logs dans des fichiers séparés pour chaque serveur"""
 
@@ -105,14 +102,12 @@ async def log_to_json(event, guild_id, username, user_id, content=None, before=N
 
         logging.info(f"✅ Log écrit : {file_path}")
 
-        # ✅ ENVOYER DANS LE SALON LOG
         await send_log_to_channel(event, guild_id, log_entry)
 
     except (json.JSONDecodeError, IOError) as e:
         logging.error(f"❌ Erreur lors de l'écriture du log : {e}")
 
 
-# ✅ Envoi des logs dans les salons Discord
 async def send_log_to_channel(event, guild_id, log_entry):
     """Envoie un log dans le salon défini dans la configuration."""
     config = load_server_config()
@@ -161,7 +156,6 @@ async def send_log_to_channel(event, guild_id, log_entry):
     await channel.send(embed=embed)
 
 
-# ✅ Démarrage du bot
 @bot.event
 async def on_ready():
     global bot_ready
@@ -178,7 +172,6 @@ async def on_ready():
     print(f"\n✅ Bot en ligne en tant que {bot.user}!\n")
 
 
-# ✅ Gestion des événements
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -201,7 +194,6 @@ async def on_message_edit(before, after):
     await log_to_json("message_edited", before.guild.id, str(before.author), str(before.author.id), before=before.content, after=after.content, channel=str(before.channel))
 
 
-# ✅ Chargement des Cogs
 async def load_cogs():
     for folder in ["commands", "events"]:
         for filename in os.listdir(f"./{folder}"):
@@ -214,7 +206,6 @@ async def load_cogs():
                         f"❌ Échec du chargement de {folder}/{filename}: {e}")
 
 
-# ✅ Lancer le bot
 async def main():
     async with bot:
         await load_cogs()

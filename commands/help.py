@@ -24,7 +24,6 @@ class HelpCommand(commands.Cog):
                 await ctx.send("❌ Commande introuvable. Utilisez `!help` pour voir la liste des commandes.")
             return
 
-        # ✅ Générer les pages d'aide
         pages = []
         for cog_name, cog in self.bot.cogs.items():
             commands_list = [
@@ -43,19 +42,16 @@ class HelpCommand(commands.Cog):
             await ctx.send("❌ Aucune commande disponible.")
             return
 
-        # ✅ Gérer la pagination
         current_page = 0
         total_pages = len(pages)
 
-        # Ajout de l'indicateur de page X / Y
         def update_footer():
             pages[current_page].set_footer(
                 text=f"Page {current_page + 1} / {total_pages} • Utilisez ◀️ et ▶️ pour naviguer")
 
-        update_footer()  # Initialisation
+        update_footer()
         message = await ctx.send(embed=pages[current_page])
 
-        # Ajouter les réactions
         await message.add_reaction("◀️")
         await message.add_reaction("▶️")
 
