@@ -1,68 +1,117 @@
+import os
+import json
 import discord
 from discord.ext import commands
-import os
-import dotenv
+import logging
+
+CONFIG_FILE = "server_config.json"
 
 
 class LogsConfig(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.bot.server_config = self.load_server_config()
+
+    def load_server_config(self):
+        """Charge la configuration des logs depuis le fichier JSON."""
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r") as f:
+                return json.load(f)
+        return {}
+
+    def save_server_config(self, config):
+        """Sauvegarde la configuration des logs dans le fichier JSON."""
+        with open(CONFIG_FILE, "w") as f:
+            json.dump(config, f, indent=4)
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def setlog(self, ctx, log_type: str = None, channel: discord.TextChannel = None):
+    async def setlog(self, ctx, log_type: str, channel: discord.TextChannel):
         """
-        Change le salon log pour `sent`, `deleted` ou `edited`.
-        Usage : !setlog sent #log-salon
+        Change le salon où les logs sont envoyés.
+        Utilisation : `!setlog <sent/deleted/edited> #channel`
         """
+        guild_id = str(ctx.guild.id)
+        config = self.load_server_config()
+
         log_types = {
-            "sent": "LOGS_SENT_CHANNEL_ID",
-            "deleted": "LOGS_DELETED_CHANNEL_ID",
-            "edited": "LOGS_EDITED_CHANNEL_ID"
+            "sent": "message_sent",
+            "deleted": "message_deleted",
+            "edited": "message_edited"
         }
 
         if log_type not in log_types:
-            await ctx.send("❌ Usage: `!setlog [sent/deleted/edited] #salon`")
+            await ctx.send("❌ Type de log invalide. Utilisez `sent`, `deleted`, ou `edited`.")
             return
 
-        if channel is None:
-            await ctx.send("❌ Veuillez mentionner un salon valide. Exemple: `!setlog sent #logs-envoyés`")
-            return
+        if guild_id not in config:
+            config[guild_id] = {}
 
-        env_file = ".env"
-        lines = []
-        if os.path.exists(env_file):
-            with open(env_file, "r") as f:
-                lines = f.readlines()
+        config[guild_id][log_types[log_type]] = channel.id
+        self.save_server_config(config)
 
-        with open(env_file, "w") as f:
-            found = False
-            for line in lines:
-                if line.startswith(log_types[log_type]):
-                    f.write(f"{log_types[log_type]}={channel.id}\n")
-                    found = True
-                else:
-                    f.write(line)
-            if not found:
-                f.write(f"{log_types[log_type]}={channel.id}\n")
+        self.bot.server_config = self.load_server_config()
 
-        dotenv.load_dotenv()
+        await ctx.send(f"✅ Salon des logs `{log_type}` changé pour {channel.mention}.")
 
-        os.environ[log_types[log_type]] = str(channel.id)
-
-        await ctx.send(f"✅ Le salon des logs `{log_type}` a été changé en {channel.mention}")
+        updated_config = self.load_server_config()
+        if updated_config.get(guild_id, {}).get(log_types[log_type]) == channel.id:
+            await ctx.send(f"🔄 Vérification réussie : `{log_type}` est bien défini sur {channel.mention}.")
+        else:
+            await ctx.send("⚠️ Erreur : le changement de salon n'a pas été sauvegardé correctement.")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def clearlogs(self, ctx, log_type: str = None):
+    async def showlogs(self, ctx):
         """
-        Supprime les logs de `sent`, `deleted` ou `edited`.
-        Usage : !clearlogs sent
+        Affiche les salons de logs actuels pour le serveur.
         """
+        guild_id = str(ctx.guild.id)
+        config = self.load_server_config()
+
+        if guild_id not in config:
+            await ctx.send("⚠️ Aucun salon de logs défini pour ce serveur.")
+            return
+
+        embed = discord.Embed(
+            title="📜 Configuration des Logs",
+            color=discord.Color.blue()
+        )
+
+        log_types = {
+            "message_sent": "📩 Messages envoyés",
+            "message_deleted": "🗑️ Messages supprimés",
+            "message_edited": "✏️ Messages modifiés"
+        }
+
+        for log_key, log_name in log_types.items():
+            channel_id = config[guild_id].get(log_key, None)
+            if channel_id:
+                channel = self.bot.get_channel(channel_id)
+                embed.add_field(
+                    name=log_name,
+                    value=channel.mention if channel else f"❌ `{channel_id}` (invalide)",
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name=log_name, value="❌ Aucun salon défini", inline=False)
+
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def clearlogs(self, ctx, log_type: str):
+        """
+        Supprime les logs de `sent`, `deleted`, ou `edited`.
+        """
+        guild_id = str(ctx.guild.id)
+        config = self.load_server_config()
+
         log_files = {
-            "sent": "logs_sent.json",
-            "deleted": "logs_deleted.json",
-            "edited": "logs_edited.json"
+            "sent": f"data/{guild_id}/logs_sent.json",
+            "deleted": f"data/{guild_id}/logs_deleted.json",
+            "edited": f"data/{guild_id}/logs_edited.json"
         }
 
         if log_type not in log_files:
@@ -77,6 +126,34 @@ class LogsConfig(commands.Cog):
             await ctx.send(f"🗑️ Les logs `{log_type}` ont été supprimés.")
         else:
             await ctx.send(f"⚠️ Aucun fichier de logs `{log_type}` trouvé.")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def debuglog(self, ctx, log_type: str):
+        """Affiche le salon actuel utilisé pour un type de logs."""
+        config = self.load_server_config()
+        guild_id = str(ctx.guild.id)
+
+        log_types = {
+            "sent": "message_sent",
+            "deleted": "message_deleted",
+            "edited": "message_edited"
+        }
+
+        if log_type not in log_types:
+            await ctx.send("❌ Type invalide. Utilisez `sent`, `deleted`, ou `edited`.")
+            return
+
+        channel_id = config.get(guild_id, {}).get(log_types[log_type])
+
+        if channel_id:
+            channel = self.bot.get_channel(channel_id)
+            if channel:
+                await ctx.send(f"✅ Salon actuel pour `{log_type}` : {channel.mention} (ID: `{channel_id}`)")
+            else:
+                await ctx.send(f"⚠️ Le salon `{channel_id}` semble invalide ou supprimé.")
+        else:
+            await ctx.send(f"❌ Aucun salon défini pour `{log_type}`.")
 
 
 async def setup(bot):

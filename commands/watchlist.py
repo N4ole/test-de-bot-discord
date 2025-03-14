@@ -3,87 +3,90 @@ from discord.ext import commands
 import json
 import os
 
-WATCHLIST_FILE = "watchlist.json"
+WATCHLIST_FILE = "data/watchlist.json"
 
 
 class Watchlist(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.watchlist = self.load_watchlist()
+        self.load_watchlist()
 
     def load_watchlist(self):
-        if os.path.exists(WATCHLIST_FILE):
-            with open(WATCHLIST_FILE, "r") as f:
-                return json.load(f)
-        return []
+        """Charge la watchlist depuis le fichier JSON."""
+        if not os.path.exists(WATCHLIST_FILE):
+            with open(WATCHLIST_FILE, "w") as f:
+                json.dump({}, f, indent=4)
+
+        with open(WATCHLIST_FILE, "r") as f:
+            self.watchlist = json.load(f)
 
     def save_watchlist(self):
+        """Sauvegarde la watchlist dans le fichier JSON."""
         with open(WATCHLIST_FILE, "w") as f:
             json.dump(self.watchlist, f, indent=4)
 
     @commands.command()
-    @commands.has_permissions(manage_messages=True)
-    async def watchlist(self, ctx, action: str, member: discord.Member = None):
-        """Ajoute, retire ou affiche la liste des utilisateurs surveillés."""
+    @commands.has_permissions(administrator=True)
+    async def watchlist(self, ctx, member: discord.Member):
+        """Ajoute un utilisateur à la watchlist et crée un salon privé."""
+        guild_id = str(ctx.guild.id)
+        user_id = str(member.id)
 
-        if action.lower() == "add":
-            if not member:
-                await ctx.send("❌ Spécifiez un utilisateur à surveiller.")
-                return
-            if member.id in self.watchlist:
-                await ctx.send(f"⚠️ {member.mention} est **déjà** surveillé.")
-                return
+        if guild_id not in self.watchlist:
+            self.watchlist[guild_id] = {}
 
-            self.watchlist.append(member.id)
-            self.save_watchlist()
-            await ctx.send(f"👀 {member.mention} a été **ajouté** à la watchlist.")
+        if user_id in self.watchlist[guild_id]:
+            await ctx.send(f"⚠️ {member.mention} est déjà sur la watchlist.")
+            return
 
-        elif action.lower() == "remove":
-            if not member:
-                await ctx.send("❌ Spécifiez un utilisateur à retirer de la watchlist.")
-                return
-            if member.id not in self.watchlist:
-                await ctx.send(f"⚠️ {member.mention} **n'est pas** sur la watchlist.")
-                return
+        overwrites = {
+            ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            ctx.guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True),
+        }
 
-            self.watchlist.remove(member.id)
-            self.save_watchlist()
-            await ctx.send(f"✅ {member.mention} a été **retiré** de la watchlist.")
+        for role in ctx.guild.roles:
+            if role.permissions.administrator:
+                overwrites[role] = discord.PermissionOverwrite(
+                    view_channel=True)
 
-        elif action.lower() == "list":
-            if not self.watchlist:
-                await ctx.send("📜 La watchlist est **vide**.")
-                return
+        category = discord.utils.get(ctx.guild.categories, name="📌 Watchlist")
+        if category is None:
+            category = await ctx.guild.create_category("📌 Watchlist")
 
-            user_list = [f"<@{user_id}>" for user_id in self.watchlist]
-            await ctx.send(f"👀 **Utilisateurs surveillés :**\n" + "\n".join(user_list))
+        watch_channel = await ctx.guild.create_text_channel(
+            name=f"watch-{member.name}",
+            category=category,
+            overwrites=overwrites
+        )
 
-        else:
-            await ctx.send("❌ Commande invalide. Utilisez : `!watchlist add @user`, `!watchlist remove @user` ou `!watchlist list`.")
+        self.watchlist[guild_id][user_id] = {
+            "username": str(member),
+            "channel_id": watch_channel.id
+        }
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.bot:
-            return  # Ignore les bots
+        self.save_watchlist()
+        await ctx.send(f"✅ {member.mention} a été ajouté à la watchlist et son activité sera enregistrée dans {watch_channel.mention}. 🔍")
 
-        if message.author.id in self.watchlist:
-            log_channel = discord.utils.get(
-                message.guild.text_channels, name="watchlist-logs")
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def unwatch(self, ctx, member: discord.Member):
+        """Retire un utilisateur de la watchlist et supprime le salon associé."""
+        guild_id = str(ctx.guild.id)
+        user_id = str(member.id)
 
-            if log_channel:
-                embed = discord.Embed(
-                    title="👀 Message Surveillé",
-                    description=f"**Auteur :** {message.author.mention}\n**Salon :** {message.channel.mention}",
-                    color=discord.Color.red()
-                )
-                embed.add_field(name="💬 Message :",
-                                value=message.content, inline=False)
-                embed.set_footer(text=f"ID : {message.author.id}")
+        if guild_id not in self.watchlist or user_id not in self.watchlist[guild_id]:
+            await ctx.send(f"⚠️ {member.mention} n'est pas dans la watchlist.")
+            return
 
-                await log_channel.send(embed=embed)
-            else:
-                print(
-                    f"⚠️ Aucun salon `watchlist-logs` trouvé pour surveiller {message.author}.")
+        channel_id = self.watchlist[guild_id][user_id]["channel_id"]
+        watch_channel = self.bot.get_channel(channel_id)
+        if watch_channel:
+            await watch_channel.delete()
+
+        del self.watchlist[guild_id][user_id]
+        self.save_watchlist()
+
+        await ctx.send(f"❌ {member.mention} a été retiré de la watchlist et son salon de surveillance a été supprimé.")
 
 
 async def setup(bot):

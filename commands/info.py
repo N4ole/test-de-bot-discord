@@ -8,6 +8,7 @@ class Info(commands.Cog):
 
     @commands.command()
     async def userinfo(self, ctx, member: discord.Member = None):
+        """Affiche des informations sur un membre"""
         member = member or ctx.author
         embed = discord.Embed(
             title=f"User Info - {member}", color=discord.Color.blue())

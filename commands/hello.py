@@ -7,6 +7,7 @@ class Hello(commands.Cog):
 
     @commands.command()
     async def hello(self, ctx):
+        """Dit bonjour à l'utilisateur"""
         await ctx.send(f"Hello {ctx.author.mention}! 👋")
 
 

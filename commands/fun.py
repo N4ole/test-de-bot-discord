@@ -8,6 +8,7 @@ class Fun(commands.Cog):
 
     @commands.command()
     async def roll(self, ctx):
+        """lance un dés à 6 faces"""
         number = random.randint(1, 6)
         await ctx.send(f"🎲 You rolled a {number}!")
 
@@ -18,6 +19,7 @@ class Fun(commands.Cog):
 
     @commands.command()
     async def eightball(self, ctx, *, question: str):
+        """Posez une question à la boule magique"""
         responses = [
             "Yes!", "No!", "Maybe...", "Ask again later!",
             "I don't think so.", "Absolutely!", "Not a chance!"
@@ -26,6 +28,7 @@ class Fun(commands.Cog):
 
     @commands.command()
     async def meme(self, ctx):
+        """Envoie un meme aléatoire"""
         memes = [
             "https://i.imgur.com/W3duR07.png",
             "https://i.imgur.com/aQw5bLw.jpeg",
