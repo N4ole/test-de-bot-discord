@@ -6,8 +6,6 @@ import discord
 
 CONFIG_FILE = "server_config.json"
 
-# ✅ Charger et sauvegarder la configuration des serveurs
-
 
 def load_server_config():
     """Charge la configuration des serveurs."""
@@ -22,16 +20,12 @@ def save_server_config(config):
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=4)
 
-# ✅ Récupération d'un fichier spécifique par serveur
-
 
 def get_server_file(guild_id, filename):
     """Retourne le chemin d'un fichier spécifique à un serveur"""
     folder = f"data/{guild_id}/"
     os.makedirs(folder, exist_ok=True)
     return f"{folder}{filename}"
-
-# ✅ Fonction pour enregistrer les logs JSON et les envoyer dans le salon de logs
 
 
 async def log_to_json(bot, event, guild_id, username, user_id, content=None, before=None, after=None, channel=None):
@@ -40,14 +34,12 @@ async def log_to_json(bot, event, guild_id, username, user_id, content=None, bef
     config = load_server_config()
     guild_id = str(guild_id)
 
-    # Vérifie si le logging est activé pour cet événement
     setting_key = f"{event}_enabled"
     if guild_id in config and setting_key in config[guild_id] and not config[guild_id][setting_key]:
         logging.info(
             f"⚠️ Logs désactivés pour {event} sur {guild_id}, pas d'enregistrement.")
         return
 
-    # Création du log
     log_entry = {
         "username": username,
         "user_id": user_id,
@@ -60,7 +52,6 @@ async def log_to_json(bot, event, guild_id, username, user_id, content=None, bef
         log_entry["before"] = before
         log_entry["after"] = after
 
-    # Sélection du fichier de log
     file_map = {
         "message_sent": get_server_file(guild_id, "logs_sent.json"),
         "message_deleted": get_server_file(guild_id, "logs_deleted.json"),
@@ -74,11 +65,9 @@ async def log_to_json(bot, event, guild_id, username, user_id, content=None, bef
         return
 
     try:
-        # Vérifier si le fichier existe et charger son contenu
         if os.path.exists(file_path):
             with open(file_path, "r") as f:
                 logs = json.load(f)
-                # 🔴 Vérification : Si logs n'est pas une liste, on le réinitialise
                 if not isinstance(logs, list):
                     logs = []
         else:
@@ -91,13 +80,10 @@ async def log_to_json(bot, event, guild_id, username, user_id, content=None, bef
 
         logging.info(f"✅ Log écrit : {file_path}")
 
-        # ✅ Envoi du log dans le salon Discord
         await send_log_to_channel(bot, event, guild_id, log_entry)
 
     except (json.JSONDecodeError, IOError) as e:
         logging.error(f"❌ Erreur lors de l'écriture du log : {e}")
-
-# ✅ Fonction pour envoyer les logs dans un salon Discord
 
 
 async def send_log_to_channel(bot, event, guild_id, log_entry):

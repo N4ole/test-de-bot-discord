@@ -39,7 +39,7 @@ class LogsConfig(commands.Cog):
             "sent": "message_sent",
             "deleted": "message_deleted",
             "edited": "message_edited",
-            "voice": "voice_log_channel"  # ✅ Ajout du log vocal
+            "voice": "voice_log_channel"
         }
 
         if log_type not in log_types:
@@ -84,7 +84,7 @@ class LogsConfig(commands.Cog):
             "message_sent": "📩 Messages envoyés",
             "message_deleted": "🗑️ Messages supprimés",
             "message_edited": "✏️ Messages modifiés",
-            "voice_log_channel": "🎙️ Logs vocaux"  # ✅ Ajout des logs vocaux
+            "voice_log_channel": "🎙️ Logs vocaux"
         }
 
         for log_key, log_name in log_types.items():
@@ -115,7 +115,6 @@ class LogsConfig(commands.Cog):
             "sent": f"data/{guild_id}/logs_sent.json",
             "deleted": f"data/{guild_id}/logs_deleted.json",
             "edited": f"data/{guild_id}/logs_edited.json",
-            # ✅ Ajout des logs vocaux
             "voice": f"data/{guild_id}/logs_voice.json"
         }
 
@@ -143,7 +142,7 @@ class LogsConfig(commands.Cog):
             "sent": "message_sent",
             "deleted": "message_deleted",
             "edited": "message_edited",
-            "voice": "voice_log_channel"  # ✅ Ajout de la vérification pour logs vocaux
+            "voice": "voice_log_channel"
         }
 
         if log_type not in log_types:

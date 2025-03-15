@@ -8,18 +8,16 @@ import discord
 from discord.ext import commands
 import logging
 
-# Importation des fonctions de logs
+
 from logs.logging_utils import log_to_json, send_log_to_channel
 
 
-# Empêche `on_ready()` d'être exécuté plusieurs fois
 bot_ready = False
 
-# Chargement des variables d'environnement
-dotenv.load_dotenv()
+
 TOKEN = os.getenv("DISCORD_TOKEN")
 
-# Configuration des logs
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
@@ -27,25 +25,18 @@ logging.basicConfig(
 )
 
 
-# Fichiers de configuration
 CONFIG_FILE = "server_config.json"
 WATCHLIST_FILE = "data/watchlist.json"
 MODLOGS_FILE = "data/modlogs.json"
 WARNINGS_FILE = "data/warnings.json"
 
 
-# Définition des intents
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
-
-# ✅ Chargement des Cogs
-
-
-# ✅ Mise à jour du statut du bot
 
 
 async def update_bot_status():
@@ -87,7 +78,6 @@ async def on_ready():
     print(f"{'='*60}\n")
 
 
-# ✅ Événement pour les messages envoyés
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -96,15 +86,12 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-# ✅ Événement pour les messages supprimés
-@bot.event
 async def on_message_delete(message):
     if message.author == bot.user:
         return
     await log_to_json(bot, "message_deleted", message.guild.id, str(message.author), str(message.author.id), content=message.content, channel=str(message.channel))
 
 
-# ✅ Événement pour les messages modifiés
 @bot.event
 async def on_message_edit(before, after):
     if before.author == bot.user or before.content == after.content:
@@ -126,7 +113,6 @@ async def load_cogs():
                         f"❌ Échec du chargement de {folder}/{filename}: {e}")
 
 
-# ✅ Lancer le bot
 async def main():
     async with bot:
         await load_cogs()

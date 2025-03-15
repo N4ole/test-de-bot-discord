@@ -5,20 +5,18 @@ import os
 from datetime import datetime
 from logs.logging_utils import log_to_json, send_log_to_channel
 
-# Fichier de configuration des logs vocaux
-VOICE_LOGS_DIR = "data/voice_logs"
+# Fichier de configuration des logs
+VOICE_LOGS_DIR = "../data/voice_logs"
 
 
 class VoiceLogs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # Assure que le dossier existe
         os.makedirs(VOICE_LOGS_DIR, exist_ok=True)
 
     def get_log_file(self, guild_id):
         """Retourne le chemin du fichier de logs vocaux d'un serveur."""
         guild_folder = f"{VOICE_LOGS_DIR}/{guild_id}"
-        # Crée le dossier si inexistant
         os.makedirs(guild_folder, exist_ok=True)
         return f"{guild_folder}/voice_logs.json"
 
@@ -30,7 +28,7 @@ class VoiceLogs(commands.Cog):
             with open(log_file, "r") as f:
                 try:
                     logs = json.load(f)
-                    if not isinstance(logs, list):  # Vérification structure
+                    if not isinstance(logs, list):
                         logs = []
                 except json.JSONDecodeError:
                     logs = []
@@ -53,7 +51,6 @@ class VoiceLogs(commands.Cog):
             "event": None
         }
 
-        # Détection des actions vocales
         if before.channel is None and after.channel is not None:
             log_entry["event"] = f"🔊 {member.mention} a rejoint **{after.channel.name}**"
         elif before.channel is not None and after.channel is None:
@@ -61,35 +58,30 @@ class VoiceLogs(commands.Cog):
         elif before.channel != after.channel:
             log_entry["event"] = f"🔁 {member.mention} est passé de **{before.channel.name}** à **{after.channel.name}**"
 
-        # Détection du mute / unmute
         if before.self_mute != after.self_mute:
             if after.self_mute:
                 log_entry["event"] = f"🔕 {member.mention} s'est muté"
             else:
                 log_entry["event"] = f"🔊 {member.mention} s'est démuté"
 
-        # Détection du deaf / undeaf
         if before.self_deaf != after.self_deaf:
             if after.self_deaf:
                 log_entry["event"] = f"🔇 {member.mention} s'est rendu sourd"
             else:
                 log_entry["event"] = f"🔉 {member.mention} a réactivé le son"
 
-        # Détection du mute administrateur
         if before.mute != after.mute:
             if after.mute:
                 log_entry["event"] = f"⚠️ {member.mention} a été muté par un administrateur"
             else:
                 log_entry["event"] = f"✅ {member.mention} a été démuté par un administrateur"
 
-        # Détection du deaf administrateur
         if before.deaf != after.deaf:
             if after.deaf:
                 log_entry["event"] = f"⚠️ {member.mention} a été rendu sourd par un administrateur"
             else:
                 log_entry["event"] = f"✅ {member.mention} a été réactivé par un administrateur"
 
-        # Enregistrement et envoi du log si une action est détectée
         if log_entry["event"]:
             self.log_voice_event(guild_id, log_entry)
             await self.send_log_to_channel(member.guild, log_entry)
@@ -98,7 +90,6 @@ class VoiceLogs(commands.Cog):
         """Envoie un log dans le salon de logs vocaux si configuré."""
         config_file = "server_config.json"
 
-        # Charger la configuration du serveur
         if os.path.exists(config_file):
             with open(config_file, "r") as f:
                 config = json.load(f)
@@ -144,7 +135,6 @@ class VoiceLogs(commands.Cog):
         config_file = "server_config.json"
         guild_id = str(ctx.guild.id)
 
-        # Charger la configuration existante
         if os.path.exists(config_file):
             with open(config_file, "r") as f:
                 config = json.load(f)
@@ -154,7 +144,6 @@ class VoiceLogs(commands.Cog):
         if guild_id not in config:
             config[guild_id] = {}
 
-        # Mise à jour du fichier de configuration
         config[guild_id]["voice_log_channel"] = channel.id
 
         with open(config_file, "w") as f:
