@@ -5,7 +5,7 @@ from discord.ext import commands
 import logging
 from logs.logging_utils import log_to_json, send_log_to_channel
 
-CONFIG_FILE = "server_config.json"
+CONFIG_FILE = "../server_config.json"
 
 
 class LogsConfig(commands.Cog):

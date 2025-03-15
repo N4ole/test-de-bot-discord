@@ -14,8 +14,9 @@ from logs.logging_utils import log_to_json, send_log_to_channel
 
 bot_ready = False
 
-
+dotenv.load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
+print(f"TOKEN récupéré: {TOKEN}")
 
 
 logging.basicConfig(

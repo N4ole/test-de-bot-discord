@@ -5,15 +5,16 @@ Il inclut des commandes de **modération**, **utilitaires**, **logs**, **watchli
 
 ---
 
-## 📌 1. Fonctionnalités Principales
+## 📌 1. Fonctionnalités Principales  
 
-✅ **Modération** (`!ban`, `!kick`, `!mute`, `!warn`)  
-✅ **Logs d'activité** (`message_deleted`, `message_edited`, `message_sent`)  
+✅ **Modération** (`!ban`, `!kick`, `!mute`, `!warn`, `!modlogs`)  
+✅ **Logs** (`message_deleted`, `message_edited`, `message_sent`, `voice_logs`)  
 ✅ **Système de Watchlist** (`!watchlist`, `!unwatch`, suivi des activités des membres surveillés)  
+✅ **Commandes d'information** (`!botinfo`, `!userinfo`, `!serverinfo`, `!avatar`)  
 ✅ **Système de permissions et d'accès administrateur**  
-✅ **Personnalisation des salons de logs** (`!setlog`, `!showlogs`)  
-✅ **Système de commandes paginées avec `!help`**  
+✅ **Personnalisation des salons de logs** (`!setlog`, `!setvoicelog`, `!showlogs`)  
 ✅ **Commandes diverses (math, roll, etc.)**  
+✅ **Système de gestion vocale** (`mute`, `unmute`, `deaf`, `undeaf`, changement de salon vocal)  
 
 ---
 
@@ -47,9 +48,18 @@ python bot.py
 ### 🔹 **Commandes de Modération**
 | Commande | Description |
 |----------|------------|
+| `!botinfo` | affiche les informations du bot |
+| `!userinfo @user` | affiche les informations d'un membres|
+| `!serverinfo` | affiche les information du serveur |
+| `!avatar @user` | affiche l'avatar d'un utilisateur |
+
+### 🔹 **Commandes de Modération**
+| Commande | Description |
+|----------|------------|
 | `!ban @user <raison>` | Bannit un utilisateur (admin uniquement) |
 | `!kick @user <raison>` | Expulse un utilisateur (admin uniquement) |
 | `!mute @user <raison>` | Rend un membre muet (admin uniquement) |
+| `!unmute @user` | rétablis le son pour un membre |
 | `!warn @user <raison>` | Donne un avertissement à un utilisateur |
 | `!modlogs @user` | Affiche l'historique des sanctions d'un membre |
 
@@ -59,6 +69,8 @@ python bot.py
 | `!setlog <sent/deleted/edited> #channel` | Change le salon où les logs sont envoyés |
 | `!showlogs` | Affiche les salons de logs actuels |
 | `!clearlogs <sent/deleted/edited>` | Vide un type de logs |
+| `!setvoicelog #channel` | définit le salon des logs vocaux |
+| `!showvoicelog` | affiche le salon actuel des logs vocaux |
 
 ### 🔹 **Système de Watchlist**
 | Commande | Description |
@@ -86,22 +98,34 @@ python bot.py
  │   ├── watchlist.py     
  │   ├── help.py          
  │   ├── admin.py         
- │   └── ...              
+ │   ├── info.py          
+ │   └── ...
  ├── 📂 events/           
  │   ├── message_logs.py  
  │   ├── watchlist_events.py 
+ │   ├── bot_status.py  
+ │   └── ...
+ ├── 📂 logs/             
+ │   ├── logs.py              
+ │   ├── modlogs.py           
+ │   ├── logs_config.py        
+ │   ├── voice_logs.py        
+ │   ├── logging_utils.py     
  │   └── ...
  ├── 📂 data/             
  │   ├── server_config.json  
  │   ├── logs_sent.json      
  │   ├── logs_deleted.json   
  │   ├── logs_edited.json    
- │   └── watchlist.json      
+ │   ├── voice_logs.json  
+ │   ├── watchlist.json      
+ │   └── modlogs.json      
  ├── bot.py               
  ├── requirements.txt     
  ├── .env                 
  ├── README.md            
  └── ...
+
 ```
 
 ---

@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 import discord
 
-CONFIG_FILE = "server_config.json"
+CONFIG_FILE = "../server_config.json"
 
 
 def load_server_config():
