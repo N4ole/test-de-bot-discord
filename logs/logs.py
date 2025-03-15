@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import json
 import os
+from logs.logging_utils import log_to_json, send_log_to_channel
 
 
 class Logs(commands.Cog):

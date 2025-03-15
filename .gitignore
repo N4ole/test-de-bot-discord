@@ -8,6 +8,8 @@ warnings.json
 
 watchlist.json
 
+temps.py
+
 .env
 
 __pycache__/

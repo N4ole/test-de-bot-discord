@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import json
 import os
+from datetime import datetime
 
 WATCHLIST_FILE = "data/watchlist.json"
 
@@ -87,6 +88,68 @@ class Watchlist(commands.Cog):
         self.save_watchlist()
 
         await ctx.send(f"❌ {member.mention} a été retiré de la watchlist et son salon de surveillance a été supprimé.")
+
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+        """Log les événements vocaux (mute, deaf, changement de canal, etc.) pour les utilisateurs surveillés."""
+        guild_id = str(member.guild.id)
+        user_id = str(member.id)
+
+        if guild_id not in self.watchlist or user_id not in self.watchlist[guild_id]:
+            return
+
+        channel_id = self.watchlist[guild_id][user_id]["channel_id"]
+        watch_channel = self.bot.get_channel(channel_id)
+        if not watch_channel:
+            return
+
+        embed = discord.Embed(
+            title="🎙️ Surveillance vocale",
+            color=discord.Color.purple(),
+            timestamp=datetime.utcnow()
+        )
+        embed.set_author(
+            name=member.name, icon_url=member.avatar.url if member.avatar else discord.Embed.Empty)
+
+        # Détection des actions vocales
+        if before.channel is None and after.channel is not None:
+            embed.description = f"🔊 **{member.mention}** a rejoint **{after.channel.name}**"
+        elif before.channel is not None and after.channel is None:
+            embed.description = f"🔇 **{member.mention}** a quitté **{before.channel.name}**"
+        elif before.channel != after.channel:
+            embed.description = f"🔁 **{member.mention}** est passé de **{before.channel.name}** à **{after.channel.name}**"
+
+        # Détection du mute / unmute
+        if before.self_mute != after.self_mute:
+            if after.self_mute:
+                embed.description = f"🔕 **{member.mention}** s'est muté"
+            else:
+                embed.description = f"🔊 **{member.mention}** s'est démuté"
+
+        # Détection du deaf / undeaf
+        if before.self_deaf != after.self_deaf:
+            if after.self_deaf:
+                embed.description = f"🔇 **{member.mention}** s'est rendu sourd"
+            else:
+                embed.description = f"🔉 **{member.mention}** a réactivé le son"
+
+        # Détection du mute administrateur
+        if before.mute != after.mute:
+            if after.mute:
+                embed.description = f"⚠️ **{member.mention}** a été muté par un administrateur"
+            else:
+                embed.description = f"✅ **{member.mention}** a été démuté par un administrateur"
+
+        # Détection du deaf administrateur
+        if before.deaf != after.deaf:
+            if after.deaf:
+                embed.description = f"⚠️ **{member.mention}** a été rendu sourd par un administrateur"
+            else:
+                embed.description = f"✅ **{member.mention}** a été réactivé par un administrateur"
+
+        # Envoi du log uniquement si une action a été détectée
+        if embed.description:
+            await watch_channel.send(embed=embed)
 
 
 async def setup(bot):

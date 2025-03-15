@@ -3,6 +3,7 @@ import json
 import discord
 from discord.ext import commands
 import logging
+from logs.logging_utils import log_to_json, send_log_to_channel
 
 CONFIG_FILE = "server_config.json"
 
@@ -29,7 +30,7 @@ class LogsConfig(commands.Cog):
     async def setlog(self, ctx, log_type: str, channel: discord.TextChannel):
         """
         Change le salon où les logs sont envoyés.
-        Utilisation : `!setlog <sent/deleted/edited> #channel`
+        Utilisation : `!setlog <sent/deleted/edited/voice> #channel`
         """
         guild_id = str(ctx.guild.id)
         config = self.load_server_config()
@@ -37,11 +38,12 @@ class LogsConfig(commands.Cog):
         log_types = {
             "sent": "message_sent",
             "deleted": "message_deleted",
-            "edited": "message_edited"
+            "edited": "message_edited",
+            "voice": "voice_log_channel"  # ✅ Ajout du log vocal
         }
 
         if log_type not in log_types:
-            await ctx.send("❌ Type de log invalide. Utilisez `sent`, `deleted`, ou `edited`.")
+            await ctx.send("❌ Type de log invalide. Utilisez `sent`, `deleted`, `edited`, ou `voice`.")
             return
 
         if guild_id not in config:
@@ -81,7 +83,8 @@ class LogsConfig(commands.Cog):
         log_types = {
             "message_sent": "📩 Messages envoyés",
             "message_deleted": "🗑️ Messages supprimés",
-            "message_edited": "✏️ Messages modifiés"
+            "message_edited": "✏️ Messages modifiés",
+            "voice_log_channel": "🎙️ Logs vocaux"  # ✅ Ajout des logs vocaux
         }
 
         for log_key, log_name in log_types.items():
@@ -103,7 +106,7 @@ class LogsConfig(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def clearlogs(self, ctx, log_type: str):
         """
-        Supprime les logs de `sent`, `deleted`, ou `edited`.
+        Supprime les logs de `sent`, `deleted`, `edited`, ou `voice`.
         """
         guild_id = str(ctx.guild.id)
         config = self.load_server_config()
@@ -111,11 +114,13 @@ class LogsConfig(commands.Cog):
         log_files = {
             "sent": f"data/{guild_id}/logs_sent.json",
             "deleted": f"data/{guild_id}/logs_deleted.json",
-            "edited": f"data/{guild_id}/logs_edited.json"
+            "edited": f"data/{guild_id}/logs_edited.json",
+            # ✅ Ajout des logs vocaux
+            "voice": f"data/{guild_id}/logs_voice.json"
         }
 
         if log_type not in log_files:
-            await ctx.send("❌ Usage: `!clearlogs [sent/deleted/edited]`")
+            await ctx.send("❌ Usage: `!clearlogs [sent/deleted/edited/voice]`")
             return
 
         file_path = log_files[log_type]
@@ -137,11 +142,12 @@ class LogsConfig(commands.Cog):
         log_types = {
             "sent": "message_sent",
             "deleted": "message_deleted",
-            "edited": "message_edited"
+            "edited": "message_edited",
+            "voice": "voice_log_channel"  # ✅ Ajout de la vérification pour logs vocaux
         }
 
         if log_type not in log_types:
-            await ctx.send("❌ Type invalide. Utilisez `sent`, `deleted`, ou `edited`.")
+            await ctx.send("❌ Type invalide. Utilisez `sent`, `deleted`, `edited`, ou `voice`.")
             return
 
         channel_id = config.get(guild_id, {}).get(log_types[log_type])

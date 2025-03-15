@@ -3,6 +3,7 @@ from discord.ext import commands
 import json
 import os
 from datetime import datetime
+from logs.logging_utils import log_to_json, send_log_to_channel
 
 MODLOGS_FILE = "modlogs.json"
 
