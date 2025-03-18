@@ -16,6 +16,7 @@ bot_ready = False
 
 dotenv.load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
+print(f"===============================================")
 print(f"TOKEN récupéré: {TOKEN}")
 
 
@@ -112,6 +113,7 @@ async def load_cogs():
                 except Exception as e:
                     logging.error(
                         f"❌ Échec du chargement de {folder}/{filename}: {e}")
+print(f"===============================================")
 
 
 async def main():

@@ -3,7 +3,8 @@ from discord.ext import commands
 import json
 import os
 from datetime import datetime
-from logs.logging_utils import log_to_json, send_log_to_channel
+from logs.logging_utils import log_to_json, send_log_to_channel, load_server_config, save_server_config
+
 
 # Fichier de configuration des logs
 VOICE_LOGS_DIR = "../data/voice_logs"

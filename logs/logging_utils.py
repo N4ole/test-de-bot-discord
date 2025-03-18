@@ -4,14 +4,20 @@ import logging
 from datetime import datetime
 import discord
 
-CONFIG_FILE = "../server_config.json"
+# Définition du chemin absolu pour éviter les erreurs
+CONFIG_FILE = os.path.abspath("server_config.json")
 
 
 def load_server_config():
     """Charge la configuration des serveurs."""
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r") as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                logging.error(
+                    "❌ Erreur dans server_config.json. Réinitialisation...")
+                return {}
     return {}
 
 
@@ -22,18 +28,18 @@ def save_server_config(config):
 
 
 def get_server_file(guild_id, filename):
-    """Retourne le chemin d'un fichier spécifique à un serveur"""
+    """Retourne le chemin d'un fichier spécifique à un serveur."""
     folder = f"data/{guild_id}/"
-    os.makedirs(folder, exist_ok=True)
+    os.makedirs(folder, exist_ok=True)  # Crée le dossier s'il n'existe pas
     return f"{folder}{filename}"
 
 
 async def log_to_json(bot, event, guild_id, username, user_id, content=None, before=None, after=None, channel=None):
     """Enregistre les logs dans des fichiers JSON et les envoie dans le salon approprié."""
-
     config = load_server_config()
     guild_id = str(guild_id)
 
+    # Vérifier si les logs sont activés pour cet événement
     setting_key = f"{event}_enabled"
     if guild_id in config and setting_key in config[guild_id] and not config[guild_id][setting_key]:
         logging.info(
@@ -55,7 +61,9 @@ async def log_to_json(bot, event, guild_id, username, user_id, content=None, bef
     file_map = {
         "message_sent": get_server_file(guild_id, "logs_sent.json"),
         "message_deleted": get_server_file(guild_id, "logs_deleted.json"),
-        "message_edited": get_server_file(guild_id, "logs_edited.json")
+        "message_edited": get_server_file(guild_id, "logs_edited.json"),
+        # Ajout du log vocal
+        "voice": get_server_file(guild_id, "voice_logs.json")
     }
 
     file_path = file_map.get(event)
@@ -69,6 +77,8 @@ async def log_to_json(bot, event, guild_id, username, user_id, content=None, bef
             with open(file_path, "r") as f:
                 logs = json.load(f)
                 if not isinstance(logs, list):
+                    logging.warning(
+                        f"⚠️ Fichier {file_path} corrompu. Réinitialisation...")
                     logs = []
         else:
             logs = []
@@ -83,41 +93,49 @@ async def log_to_json(bot, event, guild_id, username, user_id, content=None, bef
         await send_log_to_channel(bot, event, guild_id, log_entry)
 
     except (json.JSONDecodeError, IOError) as e:
-        logging.error(f"❌ Erreur lors de l'écriture du log : {e}")
+        logging.error(f"❌ Erreur lors de l'écriture du log {event} : {e}")
 
 
 async def send_log_to_channel(bot, event, guild_id, log_entry):
     """Envoie un log dans le salon défini dans la configuration."""
-
     config = load_server_config()
     guild_id = str(guild_id)
 
     if guild_id not in config or event not in config[guild_id]:
+        logging.warning(
+            f"⚠️ Aucun salon de log défini pour {event} sur le serveur {guild_id}.")
         return
 
     channel_id = config[guild_id].get(event)
 
-    if channel_id:
-        channel = bot.get_channel(int(channel_id))
-        if channel:
-            embed = discord.Embed(
-                title=f"📌 Log: {event.replace('_', ' ').title()}",
-                color=discord.Color.blue()
-            )
-            embed.add_field(name="👤 Utilisateur",
-                            value=f"{log_entry['username']} ({log_entry['user_id']})", inline=False)
-            embed.add_field(
-                name="📍 Salon", value=log_entry["channel"], inline=False)
-            embed.add_field(
-                name="🕒 Date", value=log_entry["timestamp"], inline=False)
+    if not channel_id:
+        logging.warning(
+            f"⚠️ Aucun salon trouvé pour {event} dans la configuration du serveur {guild_id}.")
+        return
 
-            if event in ["message_sent", "message_deleted"]:
-                embed.add_field(name="💬 Message", value=log_entry.get(
-                    "content", "Inconnu"), inline=False)
-            elif event == "message_edited":
-                embed.add_field(name="✏️ Avant", value=log_entry.get(
-                    "before", "Inconnu"), inline=False)
-                embed.add_field(name="🔄 Après", value=log_entry.get(
-                    "after", "Inconnu"), inline=False)
+    channel = bot.get_channel(int(channel_id))
 
-            await channel.send(embed=embed)
+    if not channel:
+        logging.error(
+            f"❌ Le salon de logs `{channel_id}` n'existe plus sur {guild_id}.")
+        return
+
+    embed = discord.Embed(
+        title=f"📌 Log: {event.replace('_', ' ').title()}",
+        color=discord.Color.blue()
+    )
+    embed.add_field(name="👤 Utilisateur",
+                    value=f"{log_entry['username']} ({log_entry['user_id']})", inline=False)
+    embed.add_field(name="📍 Salon", value=log_entry["channel"], inline=False)
+    embed.add_field(name="🕒 Date", value=log_entry["timestamp"], inline=False)
+
+    if event in ["message_sent", "message_deleted"]:
+        embed.add_field(name="💬 Message", value=log_entry.get(
+            "content", "Inconnu"), inline=False)
+    elif event == "message_edited":
+        embed.add_field(name="✏️ Avant", value=log_entry.get(
+            "before", "Inconnu"), inline=False)
+        embed.add_field(name="🔄 Après", value=log_entry.get(
+            "after", "Inconnu"), inline=False)
+
+    await channel.send(embed=embed)
