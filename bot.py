@@ -9,9 +9,6 @@ from discord.ext import commands
 import logging
 
 
-from logs.logging_utils import log_to_json, send_log_to_channel
-
-
 bot_ready = False
 
 dotenv.load_dotenv()

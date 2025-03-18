@@ -12,6 +12,8 @@ temps.py
 
 .env
 
+logs
+
 __pycache__/
 *.pyc
 *.pyo
@@ -23,3 +25,4 @@ commands/__pycache__/
 events/__pycache__/
 *.pyc
 *.pyo
+
