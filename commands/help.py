@@ -1,81 +1,19 @@
-import discord
 from discord.ext import commands
-import asyncio
 
 
-class HelpCommand(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+def setup(bot):
+    @bot.command(name='help')
+    async def help_command(ctx):
+        help_text = """
+📘 **Commandes disponibles** :
 
-    @commands.command(name="help")
-    async def help_command(self, ctx, command_name: str = None):
-        """Affiche l'aide générale ou les détails d'une commande spécifique."""
+👋 `!hello` – Te salue
+🏓 `!ping` – Teste la latence du bot
 
-        if command_name:
-            command = self.bot.get_command(command_name)
-            if command:
-                embed = discord.Embed(
-                    title=f"📖 Détails de `!{command.name}`",
-                    description=command.help or "Aucune description disponible.",
-                    color=discord.Color.green()
-                )
-                await ctx.send(embed=embed)
-            else:
-                await ctx.send("❌ Commande introuvable. Utilisez `!help` pour voir la liste des commandes.")
-            return
-
-        pages = []
-        for cog_name, cog in self.bot.cogs.items():
-            commands_list = [
-                f"**`!{command.name}`** - {command.help or 'Pas de description'}"
-                for command in cog.get_commands()
-            ]
-            if commands_list:
-                embed = discord.Embed(
-                    title=f"📜 Aide - {cog_name}",
-                    description="\n".join(commands_list),
-                    color=discord.Color.blue()
-                )
-                pages.append(embed)
-
-        if not pages:
-            await ctx.send("❌ Aucune commande disponible.")
-            return
-
-        current_page = 0
-        total_pages = len(pages)
-
-        def update_footer():
-            pages[current_page].set_footer(
-                text=f"Page {current_page + 1} / {total_pages} • Utilisez ◀️ et ▶️ pour naviguer")
-
-        update_footer()
-        message = await ctx.send(embed=pages[current_page])
-
-        await message.add_reaction("◀️")
-        await message.add_reaction("▶️")
-
-        def check(reaction, user):
-            return user == ctx.author and reaction.message.id == message.id and reaction.emoji in ["◀️", "▶️"]
-
-        while True:
-            try:
-                reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
-                if reaction.emoji == "▶️" and current_page < total_pages - 1:
-                    current_page += 1
-                    update_footer()
-                    await message.edit(embed=pages[current_page])
-                elif reaction.emoji == "◀️" and current_page > 0:
-                    current_page -= 1
-                    update_footer()
-                    await message.edit(embed=pages[current_page])
-
-                await message.remove_reaction(reaction, user)
-
-            except asyncio.TimeoutError:
-                await message.clear_reactions()
-                break
-
-
-async def setup(bot):
-    await bot.add_cog(HelpCommand(bot))
+🧼 `!clear <nombre>` – Supprime des messages *(admin)*
+👢 `!kick @user [raison]` – Kick un membre *(admin)*
+🔨 `!ban @user [raison]` – Ban un membre *(admin)*
+🔇 `!mute @user [raison]` – Empêche un membre d’écrire *(admin)*
+🔊 `!unmute @user` – Rétablit les permissions *(admin)*
+"""
+        await ctx.send(help_text)
