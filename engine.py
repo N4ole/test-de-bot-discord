@@ -32,7 +32,7 @@ bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
 
 def load_commands():
-    for folder in ["commands", "admin"]:
+    for folder in ["commands", "admin", "logs"]:
         commands_dir = os.path.join(os.path.dirname(__file__), folder)
         for filename in os.listdir(commands_dir):
             if filename.endswith(".py") and filename != "__init__.py":

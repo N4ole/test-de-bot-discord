@@ -21,11 +21,25 @@ def save_log_config(config):
 
 async def send_log(bot, guild_id, title: str, description: str, color=discord.Color.orange()):
     config = load_log_config()
-    if str(guild_id) in config:
-        channel_id = int(config[str(guild_id)])
-        channel = bot.get_channel(channel_id)
-        if channel:
-            embed = discord.Embed(
-                title=title, description=description, color=color)
-            embed.set_footer(text="Log de modération")
-            await channel.send(embed=embed)
+    guild_config = config.get(str(guild_id))
+
+    if not guild_config:
+        return
+
+    # Support backward compatibility (ancienne structure = juste l’ID)
+    if isinstance(guild_config, str):
+        channel_id = int(guild_config)
+    elif isinstance(guild_config, dict):
+        channel_id = int(guild_config.get("channel_id", 0))
+    else:
+        return
+
+    channel = bot.get_channel(channel_id)
+    if channel:
+        embed = discord.Embed(
+            title=title,
+            description=description,
+            color=color
+        )
+        embed.set_footer(text="Log de modération")
+        await channel.send(embed=embed)

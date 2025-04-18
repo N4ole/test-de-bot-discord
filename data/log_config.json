@@ -1,3 +1,12 @@
 {
-    "1349028153242157056": "1350207954242244608"
+  "1349028153242157056": {
+    "channel_id": "1350207938287112303",
+    "guild_name": "Test",
+    "channel_name": "log-sent"
+  },
+  "1334198510383267861": {
+    "channel_id": "1334198510916079619",
+    "guild_name": "Serveur Traject'Air Test",
+    "channel_name": "\ud83c\udfab\u30fbticket"
+  }
 }
