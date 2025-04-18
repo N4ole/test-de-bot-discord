@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
 from utils.time import get_french_datetime, get_french_time_str
-from engine import startup_time, BOT_VERSION, DEBUG_MODE
+from engine import startup_time, BOT_VERSION
+from utils.config import get_debug_mode, get_config
 
 
 def setup(bot):
@@ -38,8 +39,9 @@ def setup(bot):
         embed.set_footer(
             text=f"Requête par : {ctx.author}", icon_url=ctx.author.avatar.url if ctx.author.avatar else None)
 
-        if DEBUG_MODE:
+        debug = get_debug_mode()
+        if debug:
             embed.add_field(
-                name="🐞 Mode debug", value="Activé" if DEBUG_MODE else "Désactivé", inline=True)
+                name="🐞 Mode debug", value="Activé ✅", inline=True)
 
         await ctx.send(embed=embed)
