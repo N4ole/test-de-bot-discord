@@ -11,8 +11,14 @@ def setup(bot):
             return
 
         if state not in ["on", "off"]:
-            await ctx.send(f"🐞 Debug actuel : {'Activé' if get_debug_mode() else 'Désactivé'}\nUtilise `!debug on` ou `!debug off`")
+            current = "Activé ✅" if get_debug_mode() else "Désactivé ❌"
+            await ctx.send(f"🐞 Debug actuel : {current}\nUtilise `!debug on` ou `!debug off`")
             return
 
-        set_debug_mode(state == "on")
-        await ctx.send(f"✅ Debug {'activé' if state == 'on' else 'désactivé'} !")
+        new_state = (state == "on")
+        set_debug_mode(new_state)
+        await ctx.send(f"✅ Mode debug {'activé ✅' if new_state else 'désactivé ❌'}")
+
+        # 🖥️ Log en console
+        print(
+            f"[🐞 DEBUG] Mode debug {'activé' if new_state else 'désactivé'} par {ctx.author} ({ctx.author.id})")
