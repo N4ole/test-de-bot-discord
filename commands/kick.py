@@ -1,16 +1,24 @@
 from discord.ext import commands
 from utils.logger import send_log
+import discord
+from engine import DEBUG_MODE
 
 
 def setup(bot):
     @bot.command(name='kick')
     @commands.has_permissions(kick_members=True)
     async def kick(ctx, member: commands.MemberConverter, *, reason=None):
-        await member.kick(reason=reason)
-        await ctx.send(f"👢 {member.mention} a été kické. Raison: {reason or 'Aucune'}")
-        await send_log(bot, ctx.guild.id, f"👢 {member.mention} a été kické par {ctx.author.mention}. Raison : {reason or 'Aucune'}")
-
-    @kick.error
-    async def kick_error(ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("❌ Tu n'as pas la permission de kicker.")
+        if DEBUG_MODE:
+            await ctx.send(f"🐞 [DEBUG] Le bot aurait kické {member.mention}, mais le mode debug est actif.")
+            print(
+                f"[DEBUG] KICK simulé : {member} par {ctx.author} | Raison : {reason}")
+        else:
+            await member.kick(reason=reason)
+            await ctx.send(f"👢 {member.mention} a été kické.")
+            await send_log(
+                bot,
+                ctx.guild.id,
+                title="👢 Expulsion",
+                description=f"**Membre :** {member.mention}\n**Modérateur :** {ctx.author.mention}\n**Raison :** {reason or 'Non précisée'}",
+                color=discord.Color.orange()
+            )

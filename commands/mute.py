@@ -19,7 +19,18 @@ def setup(bot):
     async def mute(ctx, member: discord.Member, *, reason=None):
         muted_role = await get_or_create_muted_role(ctx.guild)
         await member.add_roles(muted_role, reason=reason)
-        await ctx.send(f"🔇 {member.mention} a été mute. Raison: {reason or 'Non précisée'}")
+        await ctx.send(f"🔇 {member.mention} a été mute. pour une durée {'de ' + reason or 'non précisée'}")
+        await send_log(
+            bot,
+            ctx.guild.id,
+            title="🔇 Mute",
+            description=(
+                f"**Membre :** {member.mention}\n"
+                f"**Modérateur :** {ctx.author.mention}\n"
+                f"**duré :** {reason or 'Non précisée'}"
+            ),
+            color=discord.Color.orange()
+        )
 
     @mute.error
     async def mute_error(ctx, error):
@@ -37,6 +48,16 @@ def setup(bot):
             await ctx.send(f"🔊 {member.mention} a été unmute.")
         else:
             await ctx.send(f"ℹ️ {member.mention} n'était pas mute.")
+        await send_log(
+            bot,
+            ctx.guild.id,
+            title="🔊 Unmute",
+            description=(
+                f"**Membre :** {member.mention}\n"
+                f"**Modérateur :** {ctx.author.mention}"
+            ),
+            color=discord.Color.green()
+        )
 
     @unmute.error
     async def unmute_error(ctx, error):
