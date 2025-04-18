@@ -20,10 +20,10 @@ def setup(bot):
 - `!mute @user [raison]` – Empêche un membre de parler *(admin)*
 - `!unmute @user` – Rétablit les permissions *(admin)*
 
-🛡️ **Logs & sécurité**
+🛡️ **Logs**
 - `!setlog #salon` – Définit le salon pour les logs *(admin)*
 
-🧪 **Admin avancé** *(owner uniquement)*
+🧪 **Owners** 
 - `!reload [commande]` – Recharge une commande
 - `!debug [on/off]` – Active/désactive le mode debug
 - `!listowners` – Liste les owners
